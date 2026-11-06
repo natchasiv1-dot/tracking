@@ -18,6 +18,7 @@ header{background:linear-gradient(110deg,var(--red) 0 62%,var(--yel) 62%);paddin
 nav{display:flex;flex-wrap:wrap;gap:6px}
 nav button{border:2px solid #111;border-radius:8px;background:#fff;color:#111;padding:6px 10px;font:600 13px inherit;font-family:inherit;cursor:pointer}
 nav button.on{background:#111;color:#fff}
+#mode{margin-top:8px;font-size:12px;font-weight:600;background:#fff;color:#111;display:inline-block;padding:2px 10px;border-radius:999px}
 main{max-width:720px;margin:0 auto;padding:14px}
 h2{margin:6px 0 2px;font-size:19px}.sub{color:var(--mute);font-size:13px;margin:0 0 10px}
 .card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
@@ -47,6 +48,7 @@ a.tel{display:block;padding:12px;border:1.5px solid var(--line);border-radius:10
 <header>
   <div class="brand"><div class="logo">MED</div><div><b>MED</b><small>ระบบติดตามผู้ป่วยหมู่มาก</small></div></div>
   <nav id="nav"></nav>
+  <div id="mode"></div>
 </header>
 <main>
   <section id="view"></section>
@@ -57,20 +59,55 @@ a.tel{display:block;padding:12px;border:1.5px solid var(--line);border-radius:10
   </div>
 </main>
 <div class="toast" id="toast"></div>
-<script>
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,setDoc,updateDoc,arrayUnion,onSnapshot,query,orderBy} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ===== ใส่ค่า Firebase ของคุณตรงนี้ ===== */
+const firebaseConfig={
+  apiKey:"AIzaSyCnPqPDh-4F5LsFRWFFZbYuIGygiXAe9Rg",
+  authDomain:"tracking-7af84.firebaseapp.com",
+  projectId:"tracking-7af84",
+  appId:"1:156988735903:web:3fb9227f104fb702cc3daa"
+};
+/* ======================================== */
+
 const TRI={red:["แดง","#e11d1d"],yellow:["เหลือง","#f2c230"],green:["เขียว","#22a559"],expect:["คาดหวัง","#9ca3af"],black:["ดำ","#111111"]};
 const TABS=[["triage","🚑 Triage"],["provider","Medical Provider"],["treat","Treatment"],["load","Loading"],["dest","ปลายทางนำส่ง"],["contact","ติดต่อ"]];
-let cases=[],tab="triage";
-try{cases=JSON.parse(localStorage.getItem("med_cases")||"[]")}catch(e){cases=[]}
-const save=()=>{try{localStorage.setItem("med_cases",JSON.stringify(cases))}catch(e){}};
+let cases=[],tab="triage",store;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
-function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)}
+const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)};
+const newId=()=>{const a="ABCDEFGHJKLMNPQRSTUVWXYZ23456789";let s="";for(let i=0;i<4;i++)s+=a[Math.floor(Math.random()*a.length)];return "MED-"+s};
+
+const live=!firebaseConfig.apiKey.startsWith("YOUR_");
+if(live){
+  const app=initializeApp(firebaseConfig);
+  const db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+  const col=collection(db,"cases");
+  store={
+    sub(cb){onSnapshot(query(col,orderBy("created","desc")),s=>{cb(s.docs.map(d=>d.data()))},e=>{$("mode").textContent="⚠ เชื่อมต่อไม่ได้: "+e.code})},
+    add(c){return setDoc(doc(db,"cases",c.id),c)},
+    upd(id,f,e){return updateDoc(doc(db,"cases",id),{...f,log:arrayUnion(e)})}
+  };
+  $("mode").textContent="🟢 เรียลไทม์ (Firebase)";
+}else{
+  let L=[];try{L=JSON.parse(localStorage.getItem("med_cases2")||"[]")}catch(e){}
+  const sv=()=>{try{localStorage.setItem("med_cases2",JSON.stringify(L))}catch(e){}};
+  let cb=()=>{};
+  store={
+    sub(f){cb=f;cb(L)},
+    add(c){L.unshift(c);sv();cb(L)},
+    upd(id,f,e){const c=L.find(x=>x.id===id);Object.assign(c,f);c.log.push(e);sv();cb(L)}
+  };
+  $("mode").textContent="⚠ โหมดในเครื่อง (ยังไม่ได้ตั้งค่า Firebase)";
+}
 
 function nav(){ $("nav").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l}</button>`).join("");
   $("nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;nav();view()}) }
-
-const caseSel=()=>`<label>เลือกเคส</label><select id="cid">${cases.length?cases.map(c=>`<option value="${c.id}">${c.id} · ${TRI[c.tri][0]} · ${esc(c.sex)} ${esc(c.age)}</option>`).join(""):`<option value="">ยังไม่มีเคส</option>`}</select>`;
+const opts=()=>cases.length?cases.map(c=>`<option value="${c.id}">${c.id} · ${TRI[c.tri][0]} · ${esc(c.sex)} ${esc(c.age)}</option>`).join(""):`<option value="">ยังไม่มีเคส</option>`;
+const caseSel=()=>`<label>เลือกเคส</label><select id="cid">${opts()}</select>`;
+function refreshSel(){const s=$("cid");if(s){const v=s.value;s.innerHTML=opts();if(v)s.value=v}}
 
 function view(){
   const v=$("view");
@@ -91,13 +128,12 @@ function view(){
     </div>`;
     $("go").onclick=()=>{
       const tel=$("tel").value.trim();
-      if(!$("sex").value||!$("age").value){return toast("กรุณากรอกเพศและอายุ")}
-      if(tel&&!/^\d{10}$/.test(tel)){return toast("เบอร์โทรต้องมี 10 หลัก")}
-      const n=cases.length+1;
-      cases.unshift({id:"MED-"+String(n).padStart(3,"0"),sex:$("sex").value,age:$("age").value,rep:$("rep").value,tel,
+      if(!$("sex").value||!$("age").value)return toast("กรุณากรอกเพศและอายุ");
+      if(tel&&!/^\d{10}$/.test(tel))return toast("เบอร์โทรต้องมี 10 หลัก");
+      const c={id:newId(),sex:$("sex").value,age:$("age").value,rep:$("rep").value,tel,
         tri:document.querySelector("input[name=tri]:checked").value,urg:$("urg").value,ltc:$("ltc").value,
-        status:"แจ้งเหตุ",log:[[Date.now(),"สร้างเคส (Triage)"]]});
-      save();toast("บันทึกแล้ว: "+cases[0].id);view();list();
+        status:"แจ้งเหตุ",created:Date.now(),log:[{t:Date.now(),m:"สร้างเคส (Triage)"}]};
+      store.add(c);toast("บันทึกแล้ว: "+c.id);view();
     };
   } else if(tab==="contact"){
     v.innerHTML=`<h2>ติดต่อ</h2><p class="sub">เบอร์ฉุกเฉิน (แก้ไขตามหน่วยงานของท่าน)</p>
@@ -115,11 +151,11 @@ function view(){
     ${cfg[2].map(([l,k,t,p])=>`<label>${l}</label>${t==="area"?`<textarea id="f_${k}" rows="3" placeholder="${p}"></textarea>`:`<input id="f_${k}" type="${t}" placeholder="${p}">`}`).join("")}
     <button class="send" id="go">💾 บันทึก</button><div class="clr"></div></div>`;
     $("go").onclick=()=>{
-      const c=cases.find(x=>x.id===$("cid").value); if(!c)return toast("ยังไม่มีเคสให้เลือก");
-      const parts=[];
-      cfg[2].forEach(([l,k])=>{const val=$("f_"+k).value.trim(); if(val){c[k]=val;parts.push(l+": "+val)}});
-      c.status=cfg[4]; c.log.push([Date.now(),cfg[0]+" · "+parts.join(", ")]);
-      save();toast("อัปเดต "+c.id);list();
+      const id=$("cid").value; if(!id)return toast("ยังไม่มีเคสให้เลือก");
+      const f={status:cfg[4]},parts=[];
+      cfg[2].forEach(([l,k])=>{const val=$("f_"+k).value.trim();if(val){f[k]=val;parts.push(l+": "+val)}});
+      store.upd(id,f,{t:Date.now(),m:cfg[0]+" · "+parts.join(", ")});
+      toast("อัปเดต "+id);
     };
   }
 }
@@ -133,9 +169,10 @@ function list(){
     <b>${c.id}</b> · ${esc(c.sex)} ${esc(c.age)} ปี <span class="badge">${esc(c.status)}</span>
     <div>เร่งด่วน: ${esc(c.urg)}${c.hosp?" · ปลายทาง: "+esc(c.hosp):""}${c.veh?" · พาหนะ: "+esc(c.veh):""}</div>
     ${c.ltc?`<div>⚠ ${esc(c.ltc)}</div>`:""}
-    <div>${new Date(last[0]).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})} · ${esc(last[1])}</div></div></div>`}).join(""):`<div class="empty">ยังไม่มีรายการ</div>`;
+    <div>${new Date(last.t).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})} · ${esc(last.m)}</div></div></div>`}).join(""):`<div class="empty">ยังไม่มีรายการ</div>`;
 }
-nav();view();list();
+nav();view();
+store.sub(d=>{cases=d;list();refreshSel()});
 </script>
 </body>
 </html>
