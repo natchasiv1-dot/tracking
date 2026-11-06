@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบติดตาม MED</title>
+<style>
+:root{--bg:#f6f6f4;--card:#fff;--ink:#1a1a1a;--mute:#666;--line:#1a1a1a;--red:#d62828;--yel:#f2c230;--blue:#1d4ed8;--field:#fff;
+box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--card:#1e1e1e;--ink:#f1f1f1;--mute:#a0a0a0;--line:#e5e5e5;--field:#2a2a2a;color-scheme:dark}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Thai","Sarabun",system-ui,sans-serif;font-size:15px}
+header{background:linear-gradient(110deg,var(--red) 0 62%,var(--yel) 62%);padding:12px 14px;color:#fff}
+.brand{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.logo{background:#111;border:2px solid #fff;border-radius:6px;padding:6px 7px;font-weight:800;font-size:12px}
+.brand b{display:block;font-size:18px;line-height:1.1}.brand small{font-size:11px;opacity:.9}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button{border:2px solid #111;border-radius:8px;background:#fff;color:#111;padding:6px 10px;font:600 13px inherit;font-family:inherit;cursor:pointer}
+nav button.on{background:#111;color:#fff}
+main{max-width:720px;margin:0 auto;padding:14px}
+h2{margin:6px 0 2px;font-size:19px}.sub{color:var(--mute);font-size:13px;margin:0 0 10px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:14px;margin-bottom:14px}
+label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.tri{display:flex;flex-wrap:wrap;gap:8px}
+.tri label{margin:0;display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:500}
+.tri input{width:auto;margin:0}
+.dot{width:12px;height:12px;border-radius:50%;display:inline-block;border:1px solid #000}
+.send{background:var(--blue);color:#fff;border:2px solid var(--line);border-radius:10px;padding:10px 16px;font:700 14px inherit;font-family:inherit;cursor:pointer;float:right;margin-top:12px}
+.clr{clear:both}
+.case{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--mute)}
+.case:first-of-type{border-top:0}
+.case .dot{width:16px;height:16px;margin-top:3px;flex:none}
+.case b{font-size:14px}.case div{font-size:13px;color:var(--mute)}
+.badge{display:inline-block;border:1.5px solid var(--line);border-radius:999px;padding:1px 8px;font-size:12px;color:var(--ink)}
+.sum{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
+.sum span{border:1.5px solid var(--line);border-radius:999px;padding:3px 10px;font-size:13px;font-weight:600}
+.empty{color:var(--mute);text-align:center;padding:14px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none}
+.toast.show{opacity:1}
+a.tel{display:block;padding:12px;border:1.5px solid var(--line);border-radius:10px;margin-bottom:8px;color:var(--ink);text-decoration:none;font-weight:600}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">MED</div><div><b>MED</b><small>ระบบติดตามผู้ป่วยหมู่มาก</small></div></div>
+  <nav id="nav"></nav>
+</header>
+<main>
+  <section id="view"></section>
+  <div class="card">
+    <h2>🔎 ติดตามสถานะ</h2>
+    <div class="sum" id="sum"></div>
+    <div id="list"></div>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+<script>
+const TRI={red:["แดง","#e11d1d"],yellow:["เหลือง","#f2c230"],green:["เขียว","#22a559"],expect:["คาดหวัง","#9ca3af"],black:["ดำ","#111111"]};
+const TABS=[["triage","🚑 Triage"],["provider","Medical Provider"],["treat","Treatment"],["load","Loading"],["dest","ปลายทางนำส่ง"],["contact","ติดต่อ"]];
+let cases=[],tab="triage";
+try{cases=JSON.parse(localStorage.getItem("med_cases")||"[]")}catch(e){cases=[]}
+const save=()=>{try{localStorage.setItem("med_cases",JSON.stringify(cases))}catch(e){}};
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+function toast(t){const e=$("toast");e.textContent=t;e.classList.add("show");setTimeout(()=>e.classList.remove("show"),2200)}
+
+function nav(){ $("nav").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-t="${k}">${l}</button>`).join("");
+  $("nav").querySelectorAll("button").forEach(b=>b.onclick=()=>{tab=b.dataset.t;nav();view()}) }
+
+const caseSel=()=>`<label>เลือกเคส</label><select id="cid">${cases.length?cases.map(c=>`<option value="${c.id}">${c.id} · ${TRI[c.tri][0]} · ${esc(c.sex)} ${esc(c.age)}</option>`).join(""):`<option value="">ยังไม่มีเคส</option>`}</select>`;
+
+function view(){
+  const v=$("view");
+  if(tab==="triage"){
+    v.innerHTML=`<h2>Triage / แจ้งผู้ประสบภัย</h2><p class="sub">กรอกข้อมูลที่จำเป็นเพื่อสร้างรายการติดตาม</p>
+    <div class="card">
+      <div class="g2"><div><label>เพศ</label><select id="sex"><option value="">เลือกเพศ</option><option>ชาย</option><option>หญิง</option><option>ไม่ทราบ</option></select></div>
+      <div><label>อายุ</label><input id="age" type="number" inputmode="numeric" placeholder="เช่น 35"></div></div>
+      <div class="g2"><div><label>ผู้แจ้ง</label><select id="rep"><option value="">เลือกผู้แจ้ง</option><option>เจ้าหน้าที่กู้ชีพ</option><option>ประชาชน</option><option>ตำรวจ/ดับเพลิง</option><option>ญาติ</option></select></div>
+      <div><label>เบอร์โทรติดต่อ (10 หลัก)</label><input id="tel" inputmode="numeric" maxlength="10" placeholder="10 หลัก"></div></div>
+      <label>ผล Triage</label>
+      <div class="tri">${Object.entries(TRI).map(([k,[n,c]],i)=>`<label><input type="radio" name="tri" value="${k}" ${i===0?"checked":""}><span class="dot" style="background:${c}"></span>${n}</label>`).join("")}</div>
+      <label>ความเร่งด่วน</label>
+      <select id="urg"><option>ปานกลาง</option><option>สูงมาก</option><option>สูง</option><option>ต่ำ</option></select>
+      <label>Life threatening condition (ถ้ามี)</label>
+      <textarea id="ltc" rows="3" placeholder="ระบุภาวะคุกคามชีวิตโดยสรุป"></textarea>
+      <button class="send" id="go">💾 ส่งประวัติ</button><div class="clr"></div>
+    </div>`;
+    $("go").onclick=()=>{
+      const tel=$("tel").value.trim();
+      if(!$("sex").value||!$("age").value){return toast("กรุณากรอกเพศและอายุ")}
+      if(tel&&!/^\d{10}$/.test(tel)){return toast("เบอร์โทรต้องมี 10 หลัก")}
+      const n=cases.length+1;
+      cases.unshift({id:"MED-"+String(n).padStart(3,"0"),sex:$("sex").value,age:$("age").value,rep:$("rep").value,tel,
+        tri:document.querySelector("input[name=tri]:checked").value,urg:$("urg").value,ltc:$("ltc").value,
+        status:"แจ้งเหตุ",log:[[Date.now(),"สร้างเคส (Triage)"]]});
+      save();toast("บันทึกแล้ว: "+cases[0].id);view();list();
+    };
+  } else if(tab==="contact"){
+    v.innerHTML=`<h2>ติดต่อ</h2><p class="sub">เบอร์ฉุกเฉิน (แก้ไขตามหน่วยงานของท่าน)</p>
+    <a class="tel" href="tel:1669">📞 1669 · สายด่วนการแพทย์ฉุกเฉิน</a>
+    <a class="tel" href="tel:191">📞 191 · แจ้งเหตุด่วนเหตุร้าย</a>
+    <a class="tel" href="tel:199">📞 199 · แจ้งเหตุเพลิงไหม้</a>`;
+  } else {
+    const cfg={
+      provider:["Medical Provider","ระบุหน่วย/ผู้ให้การรักษาที่รับเคส",[["หน่วยงาน/ทีม","provider","text","เช่น ALS-01, รพ.สนาม"],["ผู้รับผิดชอบ","staff","text","ชื่อแพทย์/พยาบาล/EMT"]],"รับเคสแล้ว"],
+      treat:["Treatment","บันทึกการรักษาที่ให้",[["การรักษา/หัตถการ","treat","area","เช่น ห้ามเลือด, ให้น้ำเกลือ, O₂"],["สัญญาณชีพ","vs","text","BP / HR / RR / SpO₂"]],"กำลังรักษา"],
+      load:["Loading","บันทึกการขึ้นรถ/พาหนะนำส่ง",[["พาหนะ/ทะเบียน","veh","text","เช่น รถพยาบาล 1234"],["เวลาออกเดินทาง","dep","time",""]],"กำลังนำส่ง"],
+      dest:["ปลายทางนำส่ง","ระบุโรงพยาบาลปลายทาง",[["โรงพยาบาลปลายทาง","hosp","text","ชื่อโรงพยาบาล"],["หมายเหตุ","note","area","เช่น แจ้ง ER ล่วงหน้าแล้ว"]],"ถึงปลายทาง"]
+    }[tab];
+    v.innerHTML=`<h2>${cfg[0]}</h2><p class="sub">${cfg[1]}</p><div class="card">${caseSel()}
+    ${cfg[2].map(([l,k,t,p])=>`<label>${l}</label>${t==="area"?`<textarea id="f_${k}" rows="3" placeholder="${p}"></textarea>`:`<input id="f_${k}" type="${t}" placeholder="${p}">`}`).join("")}
+    <button class="send" id="go">💾 บันทึก</button><div class="clr"></div></div>`;
+    $("go").onclick=()=>{
+      const c=cases.find(x=>x.id===$("cid").value); if(!c)return toast("ยังไม่มีเคสให้เลือก");
+      const parts=[];
+      cfg[2].forEach(([l,k])=>{const val=$("f_"+k).value.trim(); if(val){c[k]=val;parts.push(l+": "+val)}});
+      c.status=cfg[4]; c.log.push([Date.now(),cfg[0]+" · "+parts.join(", ")]);
+      save();toast("อัปเดต "+c.id);list();
+    };
+  }
+}
+
+function list(){
+  const cnt={};cases.forEach(c=>cnt[c.tri]=(cnt[c.tri]||0)+1);
+  $("sum").innerHTML=Object.entries(TRI).map(([k,[n,col]])=>`<span style="border-left:8px solid ${col}">${n} ${cnt[k]||0}</span>`).join("");
+  $("list").innerHTML=cases.length?cases.map(c=>{
+    const last=c.log[c.log.length-1];
+    return `<div class="case"><span class="dot" style="background:${TRI[c.tri][1]}"></span><div style="flex:1">
+    <b>${c.id}</b> · ${esc(c.sex)} ${esc(c.age)} ปี <span class="badge">${esc(c.status)}</span>
+    <div>เร่งด่วน: ${esc(c.urg)}${c.hosp?" · ปลายทาง: "+esc(c.hosp):""}${c.veh?" · พาหนะ: "+esc(c.veh):""}</div>
+    ${c.ltc?`<div>⚠ ${esc(c.ltc)}</div>`:""}
+    <div>${new Date(last[0]).toLocaleTimeString("th-TH",{hour:"2-digit",minute:"2-digit"})} · ${esc(last[1])}</div></div></div>`}).join(""):`<div class="empty">ยังไม่มีรายการ</div>`;
+}
+nav();view();list();
+</script>
+</body>
+</html>
