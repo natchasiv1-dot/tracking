@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ระบบติดตาม MED</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Thai:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f4ee;--card:#fff;--ink:#1a1a1a;--mute:#666;--line:#111;--red:#e11d1d;--yel:#ffd21f;--blue:#1d4ed8;--field:#fff;--head:#111;--hl:#fff3c4;color-scheme:light}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#121212;--card:#1e1e1e;--ink:#f1f1f1;--mute:#a0a0a0;--line:#e5e5e5;--field:#2a2a2a;--head:#000;--hl:#3a3418;color-scheme:dark}}
+*{box-sizing:border-box}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font-family:"Noto Sans Thai","Sarabun",system-ui,sans-serif;font-size:15px;padding-bottom:env(safe-area-inset-bottom,0px)}
+header{background:linear-gradient(110deg,var(--red) 0 62%,var(--yel) 62%);padding:calc(12px + env(safe-area-inset-top,0px)) 14px 12px;color:#fff;border-bottom:3px solid #111}
+.brand{display:flex;gap:10px;align-items:center;margin-bottom:10px}
+.logo{background:#111;border:2px solid #fff;border-radius:8px;padding:6px 8px;font-weight:800;font-size:13px}
+.brand b{display:block;font-size:18px;line-height:1.1}.brand small{font-size:11px;opacity:.95}
+nav{display:flex;flex-wrap:wrap;gap:6px}
+nav button{border:2px solid #111;border-radius:10px;background:#fff;color:#111;padding:6px 11px;font:600 13px/1.2 inherit;font-family:inherit;cursor:pointer}
+nav button.on{background:#111;color:#fff}
+#mode{margin-top:8px;font-size:12px;font-weight:600;background:#fff;color:#111;display:inline-block;padding:2px 10px;border-radius:999px}
+main{max-width:1080px;margin:0 auto;padding:14px}
+h2{margin:6px 0 2px;font-size:20px}h3{margin:0 0 6px;font-size:17px}
+.sub{color:var(--mute);font-size:13px;margin:0 0 10px}
+.card{background:var(--card);border:2px solid var(--line);border-radius:16px;padding:14px;margin-bottom:16px;box-shadow:4px 4px 0 var(--line)}
+label{display:block;font-weight:600;font-size:13px;margin:10px 0 4px}
+input,select,textarea{width:100%;padding:10px;border:1.5px solid var(--line);border-radius:10px;background:var(--field);color:var(--ink);font:inherit}
+textarea{resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media(max-width:640px){.g4{grid-template-columns:1fr 1fr}}
+.tri{display:flex;flex-wrap:wrap;gap:8px}
+.tri label{margin:0;display:flex;align-items:center;gap:6px;border:1.5px solid var(--line);border-radius:999px;padding:8px 12px;cursor:pointer;font-weight:500}
+.tri input{width:auto;margin:0}
+.dot{width:13px;height:13px;border-radius:50%;display:inline-block;border:1px solid #000;flex:none}
+.btn{border:2px solid var(--line);border-radius:10px;padding:9px 16px;font:700 14px inherit;font-family:inherit;cursor:pointer;background:var(--card);color:var(--ink)}
+.btn.blue{background:var(--blue);color:#fff}.btn.red{background:var(--red);color:#fff}.btn.sm{padding:5px 10px;font-size:12px}
+.btn:disabled{opacity:.5}
+.acts{display:flex;gap:8px;justify-content:flex-end;margin-top:14px}
+.tw{overflow-x:auto;border:2px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:560px}
+th{background:var(--head);color:#fff;text-align:left;padding:9px 10px;white-space:nowrap}
+td{padding:8px 10px;border-top:1px solid var(--mute);vertical-align:middle}
+tr.hl td{background:var(--hl)}
+a.id{font-weight:800;color:var(--ink);cursor:pointer;text-decoration:underline;white-space:nowrap}
+.pill{display:inline-block;border:1.5px solid #111;border-radius:999px;padding:1px 10px;font-size:12px;font-weight:700;white-space:nowrap}
+.empty{color:var(--mute);text-align:center;padding:18px}
+.srch{margin-bottom:10px}
+.lay{display:grid;grid-template-columns:190px 1fr;gap:14px;align-items:start}
+@media(max-width:720px){.lay{grid-template-columns:1fr}}
+.side{background:var(--card);border:2px solid var(--line);border-radius:14px;padding:10px;box-shadow:4px 4px 0 var(--line);display:flex;flex-direction:column;gap:7px}
+@media(max-width:720px){.side{flex-direction:row;flex-wrap:wrap}}
+.side button{border:2px solid var(--line);border-radius:10px;background:var(--card);color:var(--ink);padding:8px;font:700 13px inherit;font-family:inherit;text-align:left;cursor:pointer}
+.side button.on{background:var(--yel);color:#111}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:10px;margin-bottom:12px}
+.stat{border:2px solid var(--line);border-radius:12px;padding:10px;box-shadow:3px 3px 0 var(--line);color:#111}
+.stat b{font-size:26px;display:block;line-height:1.1}.stat small{font-size:12px;font-weight:600}
+.dn{display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.ring{width:190px;height:190px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;flex:none;box-shadow:4px 4px 0 var(--line)}
+.hole{width:96px;height:96px;border-radius:50%;background:var(--card);border:2px solid var(--line);display:flex;flex-direction:column;align-items:center;justify-content:center}
+.hole b{font-size:24px;line-height:1}.hole small{font-size:10px;color:var(--mute)}
+.leg{flex:1;min-width:210px;display:flex;flex-direction:column;gap:7px}
+.lg{display:flex;align-items:center;gap:8px;border:1.5px solid var(--line);border-radius:8px;padding:5px 9px;font-size:13px}
+.lg b{margin-left:auto}
+.subnav{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
+.subnav .btn.on{background:var(--yel);color:#111}
+.ov{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:flex-start;justify-content:center;padding:calc(20px + env(safe-area-inset-top,0px)) 12px 20px;overflow:auto;z-index:50}
+.ov.show{display:flex}
+.md{background:var(--card);border:2px solid var(--line);border-radius:16px;box-shadow:6px 6px 0 var(--line);padding:16px;width:100%;max-width:620px;position:relative}
+.md .x{position:absolute;right:12px;top:12px;border:2px solid var(--line);background:var(--card);color:var(--ink);border-radius:8px;width:32px;height:32px;font-weight:800;cursor:pointer}
+.warn{background:#fff1b8;color:#111;border:1.5px solid #111;border-radius:10px;padding:8px 10px;font-size:13px;margin:8px 0}
+.err{color:var(--red);font-size:13px;min-height:18px;margin-top:6px;font-weight:600}
+.fld{border:1.5px solid var(--line);border-radius:10px;padding:7px 10px;min-height:52px;word-break:break-word}
+.fld small{display:block;color:var(--mute);font-size:11px;font-weight:600}
+.big{font-size:34px;font-weight:800;text-align:center;border:3px dashed var(--line);border-radius:14px;padding:14px;margin:10px 0}
+.tl{margin:8px 0 0;padding:0;list-style:none;font-size:12px;color:var(--mute)}
+.tl li{padding:3px 0;border-top:1px dashed var(--mute)}
+a.tel{display:block;padding:12px;border:2px solid var(--line);border-radius:12px;margin-bottom:8px;color:var(--ink);text-decoration:none;font-weight:700;background:var(--card)}
+.hrow{display:grid;grid-template-columns:1fr 1fr auto;gap:8px;margin-bottom:8px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#111;color:#fff;padding:10px 16px;border-radius:10px;font-size:14px;opacity:0;transition:.25s;pointer-events:none;z-index:99;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><div class="logo">MED</div><div><b>ระบบติดตาม MED</b><small>ระบบติดตามผู้ประสบภัยหมู่</small></div></div>
+  <nav id="nav"></nav>
+  <div id="mode">⏳ กำลังเชื่อมต่อ…</div>
+</header>
+<main><section id="view"></section></main>
+<div class="ov" id="ov"><div class="md" id="md"></div></div>
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import {initializeApp} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
+import {initializeFirestore,persistentLocalCache,persistentMultipleTabManager,collection,doc,setDoc,updateDoc,deleteDoc,arrayUnion,onSnapshot,query,orderBy,limit,runTransaction,writeBatch,getDoc,getDocs} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+
+/* ===== ตั้งค่า ===== */
+const firebaseConfig={
+  apiKey:"AIzaSyCnPqPDh-4F5LsFRWFFZbYuIGygiXAe9Rg",
+  authDomain:"tracking-7af84.firebaseapp.com",
+  projectId:"tracking-7af84",
+  appId:"1:156988735903:web:3fb9227f104fb702cc3daa"
+};
+const CFG={
+  provider:{user:"EMS",pass:"1669"},               // เข้าหน้า Medical Provider
+  staffDefault:{"EMS001":"เจ้าหน้าที่ตัวอย่าง"}      // รหัสพนักงานตั้งต้น (เพิ่มเพิ่มเติมได้ในหน้า Medical Provider)
+};
+/* =================== */
+
+const TRI={red:["แดง","#ff5a5a","#111"],yellow:["เหลือง","#ffd84a","#111"],green:["เขียว","#4cd48a","#111"],expect:["คาดหวัง","#d6d0ee","#111"],black:["ดำ","#2b2b2b","#fff"]};
+const ST=[["Triage","#6ea1ff"],["กำลังรักษา","#ffb255"],["รอนำส่ง รพ.","#ffd84a"],["ส่ง รพ.เรียบร้อย","#6fd9b6"]];
+const stC=Object.fromEntries(ST);
+const TABS=[["triage","🚑 Triage"],["provider","🩺 Medical Provider"],["treat","💊 Treatment"],["load","🚨 Loading"],["dest","📍 ปลายทางนำส่ง"],["contact","📞 ติดต่อ"]];
+const REPS=["EMR","EMT","AEMT","Paramedic","ดับเพลิง","ตำรวจ"];
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const fmt=t=>t?new Date(t).toLocaleString("th-TH",{day:"numeric",month:"numeric",year:"numeric",hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}):"-";
+const toast=t=>{const e=$("toast");e.textContent=t;e.classList.add("show");clearTimeout(toast.h);toast.h=setTimeout(()=>e.classList.remove("show"),2600)};
+const pill=(t,c,tc="#111")=>`<span class="pill" style="background:${c};color:${tc}">${esc(t)}</span>`;
+const triP=k=>TRI[k]?pill(TRI[k][0],TRI[k][1],TRI[k][2]):"-";
+const stP=s=>pill(s||"-",stC[s]||"#ddd");
+const triOpts=sel=>Object.entries(TRI).map(([k,[n]])=>`<option value="${k}" ${k===sel?"selected":""}>${n}</option>`).join("");
+
+/* ===== Firebase ===== */
+const app=initializeApp(firebaseConfig);
+const db=initializeFirestore(app,{localCache:persistentLocalCache({tabManager:persistentMultipleTabManager()})});
+const MAXB=700*1024; /* ไฟล์แนบเก็บใน Firestore (เอกสารละ ≤1MB) */
+const fileToData=f=>new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(new Error("อ่านไฟล์ไม่ได้"));r.readAsDataURL(f)});
+async function shrinkImage(file){
+  const url=URL.createObjectURL(file);
+  try{
+    const img=await new Promise((res,rej)=>{const i=new Image();i.onload=()=>res(i);i.onerror=()=>rej(new Error("เปิดรูปไม่ได้"));i.src=url});
+    let max=1600,q=.8,out="";
+    for(let k=0;k<8;k++){
+      const sc=Math.min(1,max/Math.max(img.width,img.height));
+      const cv=document.createElement("canvas");cv.width=Math.round(img.width*sc);cv.height=Math.round(img.height*sc);
+      cv.getContext("2d").drawImage(img,0,0,cv.width,cv.height);
+      out=cv.toDataURL("image/jpeg",q);
+      if(out.length*.75<MAXB)return out;
+      q=Math.max(.5,q-.1);max=Math.round(max*.8);
+    }
+    throw new Error("รูปใหญ่เกินไป");
+  }finally{URL.revokeObjectURL(url)}
+}
+const withTimeout=(p,ms)=>Promise.race([p,new Promise((_,rej)=>setTimeout(()=>rej(new Error("หมดเวลา ตรวจสอบอินเทอร์เน็ต/สิทธิ์ Firestore")),ms))]);
+async function viewFile(id,fid){
+  try{
+    const sn=await getDoc(doc(db,"cases",id,"files",fid));
+    if(!sn.exists())return toast("ไม่พบไฟล์");
+    const f=sn.data(),blob=await (await fetch(f.data)).blob(),u=URL.createObjectURL(blob);
+    const body=f.type==="application/pdf"?`<iframe src="${u}" style="width:100%;height:70vh;border:1.5px solid var(--line);border-radius:10px"></iframe>`:`<img src="${u}" alt="" style="max-width:100%;border-radius:10px">`;
+    modal(`<h3>📎 ${esc(f.name)}</h3>${body}<div class="acts"><a class="btn" download="${esc(f.name)}" href="${u}">⬇ ดาวน์โหลด</a><button class="btn blue" data-act="open" data-id="${esc(id)}">← กลับ</button></div>`);
+  }catch(e){toast("เปิดไฟล์ไม่ได้: "+(e.code||e.message))}
+}
+const W=p=>p.catch(e=>toast("บันทึกไม่สำเร็จ: "+(e.code||e.message)));
+
+let cases=[],staffDb={},contacts={},clog=[],dlog=[];
+let tab="triage",ptab="dash",authed=sessionStorage.getItem("med_auth")==="1";
+const Q={triage:"",treat:"",load:"",dest:"",manage:""};
+const FLT={manage:"all",load:"all"};
+let contactDirty=false;
+const byId=id=>cases.find(c=>c.id===id);
+const staffMap=()=>({...CFG.staffDefault,...staffDb});
+
+function setMode(){
+  $("mode").textContent=navigator.onLine?"🟢 เรียลไทม์ (Firebase) · แก้ไขหลายเครื่องพร้อมกันได้":"🟠 ออฟไลน์ · ข้อมูลจะซิงค์เมื่อกลับมาออนไลน์";
+}
+addEventListener("online",setMode);addEventListener("offline",setMode);setMode();
+const bad=e=>{$("mode").textContent="⚠ เชื่อมต่อไม่ได้: "+(e.code||e.message)};
+onSnapshot(query(collection(db,"cases"),orderBy("created","desc")),s=>{cases=s.docs.map(d=>d.data());paint()},bad);
+onSnapshot(collection(db,"staff"),s=>{staffDb={};s.docs.forEach(d=>staffDb[d.id]=d.data().name);paint()},bad);
+onSnapshot(doc(db,"meta","contacts"),s=>{contacts=s.exists()?s.data():{};paint()},bad);
+onSnapshot(query(collection(db,"contactLog"),orderBy("t","desc"),limit(30)),s=>{clog=s.docs.map(d=>d.data());paint()},bad);
+onSnapshot(query(collection(db,"deletedCases"),orderBy("at","desc"),limit(30)),s=>{dlog=s.docs.map(d=>d.data());paint()},bad);
+
+async function createCase(d){
+  const cref=doc(db,"meta","counter");
+  return runTransaction(db,async t=>{
+    const s=await t.get(cref);let n=(s.exists()?s.data().n:0)+1,id;
+    for(let i=0;i<200;i++,n++){id=TRI[d.tri][0]+"-"+String(n).padStart(4,"0");if(!(await t.get(doc(db,"cases",id))).exists())break}
+    t.set(cref,{n});
+    t.set(doc(db,"cases",id),{...d,id,seq:n,status:"Triage",created:Date.now(),log:[{t:Date.now(),m:"สร้างเคส (Triage)"}]});
+    return id;
+  });
+}
+const upd=(id,f,m,extra={})=>W(updateDoc(doc(db,"cases",id),{...f,...extra,log:arrayUnion({t:Date.now(),m})}));
+
+/* ===== เมนู / หน้า ===== */
+function nav(){
+  $("nav").innerHTML=TABS.map(([k,l])=>`<button class="${k===tab?"on":""}" data-act="tab" data-id="${k}">${l}</button>`).join("");
+}
+const search=(k,ph)=>`<div class="srch"><input data-q="${k}" placeholder="🔎 ${ph}" value="${esc(Q[k])}"></div>`;
+const side=(k)=>`<aside class="side" id="side"></aside>`;
+const sideHtml=k=>[["all","ทั้งหมด"],...ST.map(s=>[s[0],s[0]])].map(([v,l])=>`<button class="${FLT[k]===v?"on":""}" data-act="flt" data-id="${k}" data-v="${esc(v)}">${esc(l)}</button>`).join("");
+
+function view(){
+  nav();const v=$("view");contactDirty=false;
+  if(tab==="triage"){
+    v.innerHTML=`<h2>🚑 Triage / แจ้งผู้ประสบภัย</h2><p class="sub">กรอกข้อมูลที่จำเป็นเพื่อสร้างรายการติดตาม · บังคับกรอก: เพศ อายุ ผู้แจ้ง ผล Triage (อื่น ๆ เว้นไว้ได้)</p>
+    <div class="card">
+      <div class="g4">
+        <div><label>เพศ</label><select id="sex"><option value="">เลือกเพศ</option><option>M</option><option>F</option><option>U</option></select></div>
+        <div><label>อายุ</label><input id="age" type="number" inputmode="numeric" min="0" max="120" placeholder="เช่น 35"></div>
+        <div><label>ผู้แจ้ง</label><select id="rep"><option value="">เลือกผู้แจ้ง</option>${REPS.map(r=>`<option>${r}</option>`).join("")}</select></div>
+        <div><label>เบอร์โทรติดต่อ (ถ้ามี)</label><input id="tel" inputmode="numeric" maxlength="10" placeholder="10 หลัก"></div>
+      </div>
+      <div class="g2"><div><label>ผล Triage</label>
+      <div class="tri">${Object.entries(TRI).map(([k,[n,c]])=>`<label><input type="radio" name="tri" value="${k}"><span class="dot" style="background:${c}"></span>${n}</label>`).join("")}</div></div>
+      <div><label>ความเร่งด่วน</label><select id="urg"><option>ปานกลาง</option><option>สูงมาก</option><option>สูง</option><option>ต่ำ</option></select></div></div>
+      <label>Life threatening condition (ถ้ามี)</label>
+      <textarea id="ltc" rows="3" placeholder="ระบุภาวะคุกคามชีวิตโดยสรุป"></textarea>
+      <div class="acts"><button class="btn blue" id="go">💾 ส่งประวัติ</button></div>
+    </div>
+    <div class="card"><h3>🔎 ติดตามสถานะ</h3><p class="sub">ค้นหาด้วยรหัสผู้ป่วยหรือข้อมูลที่เกี่ยวข้อง (รหัส = ผล Triage + ลำดับ เช่น แดง-0001)</p>${search("triage","ค้นหารหัส เช่น แดง-0001 หรือ ผู้แจ้ง…")}<div id="dyn"></div></div>`;
+    $("go").onclick=submitTriage;
+  }else if(tab==="provider"){
+    if(!authed){
+      v.innerHTML=`<h2>🩺 Medical Provider</h2><p class="sub">จำเป็นต้องเข้ารหัสเพื่อป้องกันการแก้ไขข้อมูลจากผู้ที่ไม่ใช่ Medical Provider</p>
+      <div class="card" style="max-width:420px"><div class="warn">🔐 กรุณาเข้าสู่ระบบเพื่อจัดการข้อมูลผู้ป่วย</div>
+      <label>User</label><input id="lu" autocomplete="username"><label>Password</label><input id="lp" type="password" autocomplete="current-password">
+      <div class="err" id="le"></div><div class="acts"><button class="btn blue" id="lg">เข้าสู่ระบบ</button></div></div>`;
+      const go=()=>{if($("lu").value.trim()===CFG.provider.user&&$("lp").value===CFG.provider.pass){authed=true;sessionStorage.setItem("med_auth","1");view()}else{$("le").textContent="User หรือ Password ไม่ถูกต้อง"}};
+      $("lg").onclick=go;$("lp").onkeydown=e=>{if(e.key==="Enter")go()};
+    }else{
+      v.innerHTML=`<h2>🩺 Medical Provider</h2><div class="subnav">
+        <button class="btn ${ptab==="dash"?"on":""}" data-act="ptab" data-id="dash">📊 Dashboard</button>
+        <button class="btn ${ptab==="manage"?"on":""}" data-act="ptab" data-id="manage">🗂 จัดการเคส</button>
+        <button class="btn ${ptab==="staff"?"on":""}" data-act="ptab" data-id="staff">🪪 รหัสพนักงาน</button>
+        <button class="btn sm" data-act="logout" style="margin-left:auto">ออกจากระบบ</button></div>
+        ${ptab==="manage"?`<div class="lay">${side()}<div>${search("manage","ค้นหารหัส / ผู้แจ้ง / LTC")}<div id="dyn"></div></div></div>`:`<div id="dyn"></div>`}`;
+    }
+  }else if(tab==="treat"){
+    v.innerHTML=`<h2>💊 Treatment</h2><p class="sub">บันทึกการประเมินและการรักษา พร้อมแนบไฟล์ · ผู้ลงทะเบียน: แพทย์ พยาบาล หรือ Paramedic</p><div class="card">${search("treat","ค้นหาประวัติ")}<div id="dyn"></div></div>`;
+  }else if(tab==="load"){
+    v.innerHTML=`<h2>🚨 Loading</h2><p class="sub">เตรียมผู้ป่วยและบันทึกข้อมูลการนำส่ง</p><div class="lay">${side()}<div class="card">${search("load","ค้นหารหัส / ผู้แจ้ง / LTC")}<div id="dyn"></div></div></div>`;
+  }else if(tab==="dest"){
+    v.innerHTML=`<h2>📍 ปลายทางนำส่ง</h2><p class="sub">ติดตามรายการที่ส่งโรงพยาบาลและข้อมูลปลายทาง</p><div class="card">${search("dest","ค้นหารหัส / โรงพยาบาล")}<div id="dyn"></div></div>`;
+  }else{
+    v.innerHTML=`<h2>📞 รวมข้อมูลติดต่อประสานงานภายใน</h2><p class="sub">รวมสายตรงและหมายเลขโทรศัพท์สำคัญสำหรับการประสานงาน (แก้ไขแล้วทุกเครื่องเห็นพร้อมกัน)</p>
+    <a class="tel" href="tel:1669">📞 1669 · สายด่วนการแพทย์ฉุกเฉิน</a><a class="tel" href="tel:191">📞 191 · แจ้งเหตุด่วนเหตุร้าย</a><a class="tel" href="tel:199">📞 199 · แจ้งเหตุเพลิงไหม้</a>
+    <div class="card" style="margin-top:14px"><div class="g2">
+      <div><label>📞 สายตรง Treatment</label><input id="c_treat" inputmode="tel" data-cd placeholder="02xxxxxx"></div>
+      <div><label>🚨 สายตรงศูนย์บัญชาการ</label><input id="c_cmd" inputmode="tel" data-cd placeholder="0800xxxxxx"></div></div>
+      <label>🏥 โรงพยาบาลที่สามารถนำส่งได้</label><div id="hrows"></div>
+      <button class="btn sm" data-act="addh">＋ เพิ่มโรงพยาบาล</button>
+      <label>📝 หมายเหตุการติดต่อ</label><textarea id="c_note" rows="3" data-cd placeholder="บันทึกข้อมูลการประสานงานเพิ่มเติม"></textarea>
+      <div class="acts"><button class="btn blue" data-act="savec">💾 บันทึกข้อมูล</button></div></div>
+    <div class="card"><h3>🕘 ประวัติหมายเหตุการติดต่อ</h3><p class="sub">แสดงหมายเหตุที่บันทึกไว้ล่าสุดและย้อนหลัง</p><div id="dyn"></div></div>`;
+    fillContact(true);
+  }
+  paint();
+}
+
+/* ===== วาดข้อมูล (เรียกซ้ำทุกครั้งที่ข้อมูลเรียลไทม์เปลี่ยน) ===== */
+const hit=(c,q)=>!q||[c.id,c.rep,c.ltc,c.hosp,c.veh,c.driver,c.sex,c.status,c.tel].join(" ").toLowerCase().includes(q.toLowerCase());
+const flt=(k,list)=>list.filter(c=>(FLT[k]==="all"||c.status===FLT[k])&&hit(c,Q[k]));
+const idLink=c=>`<a class="id" data-act="open" data-id="${esc(c.id)}">${esc(c.id)}</a>`;
+function tbl(cols,rows){
+  if(!rows.length)return `<div class="empty">ยังไม่มีรายการ</div>`;
+  return `<div class="tw"><table><thead><tr>${cols.map(c=>`<th>${c[0]}</th>`).join("")}</tr></thead><tbody>${rows.map(r=>`<tr>${cols.map(c=>`<td>${c[1](r)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`;
+}
+const C={
+  id:["รหัส",idLink],date:["วันที่แจ้ง",c=>fmt(c.created)],rep:["ผู้แจ้ง",c=>esc(c.rep)],tri:["Triage",c=>triP(c.tri)],
+  ltc:["LTC",c=>esc(c.ltc||"-")],st:["สถานะ",c=>stP(c.status)]
+};
+function donut(items,total,label){
+  let a=0;const segs=items.filter(i=>i.n>0).map(i=>{const s=a;a+=i.n/total*360;return `${i.c} ${s}deg ${a}deg`});
+  const bg=total?`conic-gradient(${segs.join(",")})`:"var(--field)";
+  return `<div class="dn"><div class="ring" style="background:${bg}"><div class="hole"><b>${total}</b><small>${label}</small></div></div>
+  <div class="leg">${items.map(i=>`<div class="lg"><span class="dot" style="background:${i.c}"></span>${i.l}<b>${i.n} (${total?(i.n/total*100).toFixed(1):"0.0"}%)</b></div>`).join("")}<small class="sub">รวมทั้งหมด ${total} ราย</small></div></div>`;
+}
+function paint(){
+  const d=$("dyn");
+  if(tab==="provider"&&authed&&ptab==="manage"&&$("side"))$("side").innerHTML=sideHtml("manage");
+  if(tab==="load"&&$("side"))$("side").innerHTML=sideHtml("load");
+  if(!d)return;
+  if(tab==="triage"){
+    d.innerHTML=tbl([["รหัสผู้ป่วย",idLink],C.date,["ผล Triage",c=>triP(c.tri)],["สถานะปัจจุบัน",c=>stP(c.status)]],cases.filter(c=>hit(c,Q.triage)));
+  }else if(tab==="provider"&&authed){
+    if(ptab==="dash"){
+      const n=cases.length,cnt=k=>cases.filter(c=>c.tri===k).length,sc=s=>cases.filter(c=>c.status===s).length;
+      d.innerHTML=`<div class="stats">
+        <div class="stat" style="background:var(--card);color:var(--ink)"><b>${n}</b><small>ทั้งหมด</small></div>
+        ${Object.entries(TRI).map(([k,[nm,col]])=>`<div class="stat" style="background:${col};color:${TRI[k][2]}"><b>${cnt(k)}</b><small>${nm}</small></div>`).join("")}</div>
+        <div class="stats">
+        <div class="stat" style="background:#ffd84a"><b>${sc("รอนำส่ง รพ.")}</b><small>รอนำส่ง รพ.</small></div>
+        <div class="stat" style="background:#6fd9b6"><b>${sc("ส่ง รพ.เรียบร้อย")}</b><small>ส่งเรียบร้อย</small></div>
+        <div class="stat" style="background:#ffb255"><b>${sc("กำลังรักษา")}</b><small>กำลังดูแล</small></div></div>
+        <div class="card"><h3>📊 สัดส่วนผู้ประสบภัยตาม Triage</h3>${donut(Object.entries(TRI).map(([k,[l,c]])=>({l,c,n:cnt(k)})),n,"ผู้ประสบภัยรวม")}</div>
+        <div class="card"><h3>📊 สถานะของผู้ป่วย</h3>${donut(ST.map(([l,c])=>({l,c,n:sc(l)})),n,"ผู้ป่วยรวม")}</div>`;
+    }else if(ptab==="manage"){
+      d.innerHTML=tbl([C.id,C.date,C.rep,C.tri,C.ltc,C.st,
+        ["เปลี่ยนสถานะ",c=>`<select data-act="setst" data-id="${esc(c.id)}">${ST.map(s=>`<option ${s[0]===c.status?"selected":""}>${s[0]}</option>`).join("")}</select>`],
+        ["จัดการ",c=>`<button class="btn sm" data-act="ren" data-id="${esc(c.id)}" title="แก้รหัส">✏️</button> <button class="btn sm" data-act="del" data-id="${esc(c.id)}" title="ลบ">🗑</button>`]],flt("manage",cases));
+    }else{
+      const sm=staffMap();
+      d.innerHTML=`<div class="card"><h3>🪪 รหัสพนักงาน (ใช้ยืนยันก่อนลบข้อมูลผู้ป่วย)</h3>
+        <div class="g2"><div><label>รหัสพนักงาน</label><input id="s_code" placeholder="เช่น EMS002"></div><div><label>ชื่อ-นามสกุล</label><input id="s_name"></div></div>
+        <div class="acts"><button class="btn blue" data-act="addstaff">＋ เพิ่มรหัส</button></div>
+        ${tbl([["รหัส",([k])=>esc(k)],["ชื่อ",([,v])=>esc(v)],["",([k])=>staffDb[k]?`<button class="btn sm" data-act="rmstaff" data-id="${esc(k)}">ลบ</button>`:`<small class="sub">ค่าตั้งต้น</small>`]],Object.entries(sm))}</div>
+        <div class="card"><h3>🧾 ประวัติการลบข้อมูล</h3>${tbl([["เวลา",x=>fmt(x.at)],["รหัสเคส",x=>esc(x.id)],["ผู้ลบ",x=>esc(x.by+" · "+x.name)]],dlog)}</div>`;
+    }
+  }else if(tab==="treat"){
+    d.innerHTML=tbl([C.id,C.date,C.rep,C.tri,C.ltc,C.st,["จัดการ",c=>`<button class="btn blue sm" data-act="treat" data-id="${esc(c.id)}">กรอกข้อมูล</button>`]],cases.filter(c=>hit(c,Q.treat)));
+  }else if(tab==="load"){
+    d.innerHTML=tbl([["รหัสผู้ป่วย",idLink],C.date,C.rep,C.tri,["Life threatening condition",c=>esc(c.ltc||"-")],C.st,["จัดการ",c=>`<button class="btn blue sm" data-act="load" data-id="${esc(c.id)}">ข้อมูลส่งงาน</button>`]],flt("load",cases));
+  }else if(tab==="dest"){
+    d.innerHTML=tbl([C.id,C.tri,["โรงพยาบาล",c=>esc(c.hosp||"-")],["รถที่นำส่ง",c=>esc(c.veh||"-")],["ผู้ที่นำส่ง",c=>esc(c.driver||"-")],C.st,
+      ["",c=>c.status==="รอนำส่ง รพ."?`<button class="btn sm" data-act="arrive" data-id="${esc(c.id)}">✔ ถึงปลายทาง</button>`:""]],cases.filter(c=>(c.hosp||c.veh||c.driver)&&hit(c,Q.dest)));
+  }else if(tab==="contact"){
+    d.innerHTML=clog.length?clog.map(x=>`<div class="fld" style="margin-bottom:8px"><small>${fmt(x.t)}</small>${esc(x.m)}</div>`).join(""):`<div class="empty">ยังไม่มีประวัติ</div>`;
+    fillContact(false);
+  }
+}
+
+/* ===== Triage ===== */
+async function submitTriage(){
+  const sex=$("sex").value,age=$("age").value,rep=$("rep").value,tel=$("tel").value.trim(),tri=document.querySelector("input[name=tri]:checked");
+  if(!sex||age===""||!rep||!tri)return toast("กรุณากรอก เพศ อายุ ผู้แจ้ง และผล Triage");
+  if(+age<0||+age>120)return toast("อายุไม่ถูกต้อง");
+  if(tel&&!/^\d{10}$/.test(tel))return toast("เบอร์โทรต้องมี 10 หลัก");
+  const b=$("go");b.disabled=true;
+  try{
+    const id=await createCase({sex,age,rep,tel,tri:tri.value,urg:$("urg").value,ltc:$("ltc").value.trim()});
+    modal(`<h3>✅ บันทึกแล้ว</h3><p class="sub">เขียนรหัสผู้ป่วยติดไว้ที่ตัวผู้ป่วยด้วย</p><div class="big">${esc(id)}</div><div class="acts"><button class="btn blue" data-act="closem">ตกลง</button></div>`);
+    view();
+  }catch(e){toast("ออกรหัสไม่ได้ ("+(e.code||e.message)+") ตรวจสอบอินเทอร์เน็ตแล้วลองใหม่");b.disabled=false}
+}
+
+/* ===== Modal ===== */
+function modal(h){$("md").innerHTML=`<button class="x" data-act="closem">×</button>`+h;$("ov").classList.add("show")}
+const closeM=()=>$("ov").classList.remove("show");
+$("ov").addEventListener("mousedown",e=>{if(e.target.id==="ov")closeM()});
+addEventListener("keydown",e=>{if(e.key==="Escape")closeM()});
+
+function openDetail(id){
+  const c=byId(id);if(!c)return;
+  const F=(l,v)=>`<div class="fld"><small>${l}</small>${v||"-"}</div>`;
+  const files=(c.files||[]).map(f=>f.url?`<a href="${esc(f.url)}" target="_blank" rel="noopener">📎 ${esc(f.name)}</a>`:`<button class="btn sm" style="margin:2px 4px 2px 0" data-act="file" data-id="${esc(c.id)}" data-f="${esc(f.id)}">📎 ${esc(f.name)}</button>`).join("");
+  modal(`<h3>📋 รายละเอียดงาน</h3><div class="g2">
+    ${F("รหัสงาน",esc(c.id))}${F("วันที่แจ้ง",fmt(c.created))}${F("เพศ",esc(c.sex))}${F("อายุ",esc(c.age))}
+    ${F("ผู้แจ้ง",esc(c.rep))}${F("Triage",triP(c.tri))}${F("เบอร์โทร",esc(c.tel))}${F("ความเร่งด่วน",esc(c.urg))}
+    ${F("LTC",esc(c.ltc))}${F("สถานะ",stP(c.status))}${F("Secondary triage",c.sec?triP(c.sec):"")}${F("Primary survey",esc(c.survey))}
+    ${F("Treatment",esc(c.treat))}${F("ผลการดูแล",esc(c.result))}${F("ร.พ.ปลายทาง",esc(c.hosp))}${F("รถที่นำส่ง",esc(c.veh))}
+    ${F("ผู้ที่นำส่ง",esc(c.driver))}${F("ไฟล์แนบ",files)}</div>
+    <ul class="tl">${[...(c.log||[])].reverse().map(l=>`<li>${fmt(l.t)} · ${esc(l.m)}</li>`).join("")}</ul>`);
+}
+
+function openTreat(id){
+  const c=byId(id);if(!c)return;
+  modal(`<h3>💊 บันทึก Treatment · ${esc(c.id)}</h3><div class="g2">
+    <div><label>Secondary triage</label><select id="m_sec">${triOpts(c.sec||c.tri)}</select></div>
+    <div><label>Primary survey</label><input id="m_sur" value="${esc(c.survey)}" placeholder="เช่น Airway compromise"></div></div>
+    <label>LTC</label><input id="m_ltc" value="${esc(c.ltc)}">
+    <label>Treatment ที่ได้รับ</label><textarea id="m_tr" rows="3">${esc(c.treat)}</textarea>
+    <label>ผลการดูแล</label><textarea id="m_res" rows="3" placeholder="Vital signs / ผลการตอบสนอง">${esc(c.result)}</textarea>
+    <label>เบอร์โทร (ถ้ามี)</label><input id="m_tel" inputmode="numeric" maxlength="10" value="${esc(c.tel)}">
+    <label>แนบรูปภาพ / PDF (รูปย่อให้อัตโนมัติ · PDF ไม่เกิน 700KB)</label><input id="m_file" type="file" accept=".pdf,.jpg,.jpeg,.png" multiple>
+    <div class="acts"><button class="btn" data-act="closem">ยกเลิก</button><button class="btn blue" id="m_ok">💾 บันทึกข้อมูล</button></div>`);
+  $("m_ok").onclick=async()=>{
+    const tel=$("m_tel").value.trim();if(tel&&!/^\d{10}$/.test(tel))return toast("เบอร์โทรต้องมี 10 หลัก");
+    const f={sec:$("m_sec").value,survey:$("m_sur").value.trim(),ltc:$("m_ltc").value.trim(),treat:$("m_tr").value.trim(),result:$("m_res").value.trim(),tel};
+    const fl=[...$("m_file").files],up=[];
+    for(const x of fl)if(!/\.(pdf|jpe?g|png)$/i.test(x.name))return toast(x.name+" ไม่ใช่ PDF/JPG/PNG");
+    if(fl.length){
+      $("m_ok").disabled=true;toast("กำลังบันทึกไฟล์…");
+      try{
+        for(const x of fl){
+          const pdf=/\.pdf$/i.test(x.name);let data;
+          if(pdf){if(x.size>MAXB)throw new Error(x.name+" ใหญ่เกิน 700KB (ถ่ายเป็นรูปแทน หรือบีบอัดไฟล์)");data=await fileToData(x)}
+          else data=await shrinkImage(x);
+          const fid=Date.now().toString(36)+Math.random().toString(36).slice(2,6),type=pdf?"application/pdf":"image/jpeg";
+          await withTimeout(setDoc(doc(db,"cases",id,"files",fid),{name:x.name,type,data,t:Date.now()}),20000);
+          up.push({id:fid,name:x.name,type});
+        }
+      }catch(e){$("m_ok").disabled=false;return toast("แนบไฟล์ไม่สำเร็จ: "+(e.message||e.code))}
+    }
+    const cur=byId(id);if(cur&&cur.status==="Triage")f.status="กำลังรักษา";
+    upd(id,f,`Treatment · Secondary triage: ${TRI[f.sec][0]}${f.treat?", "+f.treat:""}`,up.length?{files:arrayUnion(...up)}:{});
+    closeM();toast("อัปเดต "+id);
+  };
+}
+
+function openLoad(id){
+  const c=byId(id);if(!c)return;
+  modal(`<h3>📋 รายละเอียดงาน · ${esc(c.id)}</h3>
+    <label>ร.พ.ปลายทาง</label><input id="m_h" value="${esc(c.hosp)}">
+    <div class="g2"><div><label>รถที่นำส่ง</label><input id="m_v" value="${esc(c.veh)}" placeholder="เช่น ALS ทะเบียน…"></div>
+    <div><label>ผู้ที่นำส่ง</label><input id="m_d" value="${esc(c.driver)}"></div></div>
+    <div class="acts"><button class="btn" data-act="closem">ยกเลิก</button><button class="btn blue" id="m_ok">💾 บันทึกการนำส่ง</button></div>`);
+  $("m_ok").onclick=()=>{
+    const f={hosp:$("m_h").value.trim(),veh:$("m_v").value.trim(),driver:$("m_d").value.trim()};
+    if(!f.hosp)return toast("กรุณาระบุโรงพยาบาลปลายทาง");
+    const cur=byId(id);if(cur&&(cur.status==="Triage"||cur.status==="กำลังรักษา"))f.status="รอนำส่ง รพ.";
+    upd(id,f,`Loading · รพ.${f.hosp}${f.veh?", "+f.veh:""}${f.driver?", "+f.driver:""}`);
+    closeM();toast("อัปเดต "+id);
+  };
+}
+
+/* ===== ลบเคส (ต้องใส่รหัสพนักงานทุกครั้ง) ===== */
+function openDel(id){
+  modal(`<h3>🗑 ยืนยันการลบประวัติ · ${esc(id)}</h3><div class="warn">กรุณากรอกรหัสพนักงานเพื่อยืนยันก่อนลบข้อมูล (ระบบจะบันทึกว่าใครเป็นผู้ลบ)</div>
+    <label>รหัสพนักงาน</label><input id="m_code" autocomplete="off"><div class="err" id="m_err"></div>
+    <div class="acts"><button class="btn" data-act="closem">ยกเลิก</button><button class="btn red" id="m_ok">ยืนยันลบ</button></div>`);
+  $("m_code").focus();
+  const ok=async()=>{
+    const code=$("m_code").value.trim().toUpperCase(),name=staffMap()[code];
+    if(!name){$("m_err").textContent="รหัสพนักงานไม่ถูกต้อง";$("m_code").value="";return}
+    const c=byId(id);if(!c){closeM();return}
+    const b=writeBatch(db);
+    try{(await getDocs(collection(db,"cases",id,"files"))).docs.forEach(d=>b.delete(d.ref))}catch(e){}
+    b.set(doc(db,"deletedCases",id+"_"+Date.now()),{id,by:code,name,at:Date.now(),data:c});
+    b.delete(doc(db,"cases",id));
+    W(b.commit());closeM();toast("ลบ "+id+" แล้ว");
+  };
+  $("m_ok").onclick=ok;$("m_code").onkeydown=e=>{if(e.key==="Enter")ok()};
+}
+
+/* ===== แก้รหัสผู้ป่วย (ต้องใส่รหัสพนักงาน) ===== */
+function openRename(id){
+  modal(`<h3>✏️ แก้รหัสผู้ป่วย · ${esc(id)}</h3><div class="warn">ข้อมูล ไฟล์แนบ และประวัติทั้งหมดจะย้ายไปใช้รหัสใหม่ · กรอกรหัสพนักงานเพื่อยืนยัน</div>
+    <label>รหัสผู้ป่วยใหม่</label><input id="m_new" value="${esc(id)}" maxlength="30" autocomplete="off">
+    <label>รหัสพนักงาน</label><input id="m_code" autocomplete="off"><div class="err" id="m_err"></div>
+    <div class="acts"><button class="btn" data-act="closem">ยกเลิก</button><button class="btn blue" id="m_ok">💾 บันทึกรหัสใหม่</button></div>`);
+  $("m_new").focus();$("m_new").select();
+  const err=t=>{$("m_err").textContent=t};
+  const ok=async()=>{
+    const nid=$("m_new").value.trim(),code=$("m_code").value.trim().toUpperCase(),name=staffMap()[code];
+    if(!nid)return err("กรุณากรอกรหัสใหม่");
+    if(/[\/\\]/.test(nid)||nid==="."||nid==="..")return err("รหัสห้ามมีเครื่องหมาย / หรือ \\");
+    if(nid===id)return err("รหัสใหม่ต้องต่างจากรหัสเดิม");
+    if(!name)return err("รหัสพนักงานไม่ถูกต้อง");
+    if(byId(nid))return err("รหัสนี้ถูกใช้แล้ว");
+    $("m_ok").disabled=true;err("");
+    try{
+      const fs=await getDocs(collection(db,"cases",id,"files"));
+      await runTransaction(db,async t=>{
+        const o=await t.get(doc(db,"cases",id)),n=await t.get(doc(db,"cases",nid));
+        if(!o.exists())throw new Error("ไม่พบเคสเดิม (อาจถูกลบหรือแก้ไขจากเครื่องอื่น)");
+        if(n.exists())throw new Error("รหัสนี้ถูกใช้แล้ว");
+        const d=o.data();
+        t.set(doc(db,"cases",nid),{...d,id:nid,log:[...(d.log||[]),{t:Date.now(),m:`เปลี่ยนรหัส ${id} → ${nid} โดย ${code} · ${name}`}]});
+        fs.docs.forEach(f=>{t.set(doc(db,"cases",nid,"files",f.id),f.data());t.delete(f.ref)});
+        t.delete(doc(db,"cases",id));
+      });
+      closeM();toast("เปลี่ยนรหัสเป็น "+nid+" แล้ว");
+    }catch(e){$("m_ok").disabled=false;err(e.message||e.code)}
+  };
+  $("m_ok").onclick=ok;$("m_code").onkeydown=e=>{if(e.key==="Enter")ok()};
+}
+
+/* ===== ติดต่อ ===== */
+const hrow=(n="",t="")=>`<div class="hrow"><input class="hn" data-cd placeholder="ชื่อโรงพยาบาล" value="${esc(n)}"><input class="ht" data-cd inputmode="tel" placeholder="เบอร์โทร" value="${esc(t)}"><button class="btn sm" data-act="rmh">✕</button></div>`;
+function fillContact(force){
+  if(!$("hrows")||(contactDirty&&!force))return;
+  $("c_treat").value=contacts.treat||"";$("c_cmd").value=contacts.cmd||"";
+  const h=contacts.hosp&&contacts.hosp.length?contacts.hosp:[{n:"",t:""}];
+  $("hrows").innerHTML=h.map(x=>hrow(x.n,x.t)).join("");
+  if(force)$("c_note").value="";
+}
+function saveContact(){
+  const hosp=[...document.querySelectorAll(".hrow")].map(r=>({n:r.querySelector(".hn").value.trim(),t:r.querySelector(".ht").value.trim()})).filter(x=>x.n||x.t);
+  const note=$("c_note").value.trim();
+  W(setDoc(doc(db,"meta","contacts"),{treat:$("c_treat").value.trim(),cmd:$("c_cmd").value.trim(),hosp}));
+  if(note)W(setDoc(doc(collection(db,"contactLog")),{t:Date.now(),m:note}));
+  $("c_note").value="";contactDirty=false;toast("บันทึกข้อมูลติดต่อสำเร็จ");
+}
+
+/* ===== Events ===== */
+document.addEventListener("click",e=>{
+  const t=e.target.closest("[data-act]");if(!t||t.tagName==="SELECT")return;
+  const a=t.dataset.act,id=t.dataset.id;
+  switch(a){
+    case"tab":tab=id;view();break;
+    case"ptab":ptab=id;view();break;
+    case"logout":authed=false;sessionStorage.removeItem("med_auth");view();break;
+    case"flt":FLT[id]=t.dataset.v;paint();break;
+    case"open":openDetail(id);break;
+    case"file":viewFile(id,t.dataset.f);break;
+    case"treat":openTreat(id);break;
+    case"load":openLoad(id);break;
+    case"del":openDel(id);break;
+    case"ren":openRename(id);break;
+    case"arrive":upd(id,{status:"ส่ง รพ.เรียบร้อย"},"ถึงโรงพยาบาลปลายทาง · ส่ง รพ.เรียบร้อย");toast("อัปเดต "+id);break;
+    case"closem":closeM();break;
+    case"addh":$("hrows").insertAdjacentHTML("beforeend",hrow());contactDirty=true;break;
+    case"rmh":t.closest(".hrow").remove();contactDirty=true;break;
+    case"savec":saveContact();break;
+    case"addstaff":{
+      const code=$("s_code").value.trim().toUpperCase(),name=$("s_name").value.trim();
+      if(!code||!name)return toast("กรอกรหัสและชื่อ");
+      W(setDoc(doc(db,"staff",code),{name}));toast("เพิ่มรหัส "+code);break;
+    }
+    case"rmstaff":W(deleteDoc(doc(db,"staff",id)));break;
+  }
+});
+document.addEventListener("change",e=>{
+  const t=e.target;if(t.dataset.act==="setst"){upd(t.dataset.id,{status:t.value},"เปลี่ยนสถานะเป็น "+t.value);toast("อัปเดต "+t.dataset.id)}
+});
+document.addEventListener("input",e=>{
+  const t=e.target;
+  if(t.dataset.q!==undefined){Q[t.dataset.q]=t.value;paint()}
+  if(t.hasAttribute&&t.hasAttribute("data-cd"))contactDirty=true;
+});
+
+view();
+</script>
+</body>
+</html>
